@@ -1,0 +1,23 @@
+{
+  "name": "webcrawler-nodejs",
+  "version": "1.0.0",
+  "description": "",
+  "main": "main.js",
+  "scripts": {
+    "start": "node main.js",
+    "test": "jest"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mssjaney/webcrawler-nodejs.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/mssjaney/webcrawler-nodejs/issues"
+  },
+  "homepage": "https://github.com/mssjaney/webcrawler-nodejs#readme",
+  "devDependencies": {
+    "jest": "^29.7.0"
+  }
+}
