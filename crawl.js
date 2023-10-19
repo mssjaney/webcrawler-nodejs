@@ -1,27 +1,49 @@
 const { JSDOM } = require('jsdom');
 const fetch = require('node-fetch');
 
-async function crawlPage(currentURL) {
-    console.log(`Actively crawling: ${currentURL}`);
+async function crawlPage(baseURL, currentURL, pages) {
+    console.log(`ACTIVE crawling: ${currentURL}`);
+
+    const baseURLObj = new URL(baseURL);
+    const currentURLObj = new URL(currentURL);
+    if (baseURLObj.hostname !== currentURLObj.hostname) {
+        return pages;
+    }
+
+    const normalizedCurrentURL = normalizeURL(currentURL);
+    if (pages[normalizedCurrentURL] > 0) {
+        pages[normalizedCurrentURL]++;
+        return pages;
+    }
+
+    pages[normalizedCurrentURL] = 1;
 
     try {
-        const resp = await fetch('https://wagslane.dev/');
+        const resp = await fetch(currentURL);
 
         if (resp.status > 399) {
-            console.log(`Error in fetch with status code: ${resp.status}, on page: ${currentURL}`);
-            return;
+            console.log(`ERROR in fetch with status code: ${resp.status}, on page: ${currentURL}`);
+            return pages;
         }
 
         const contentType = resp.headers.get("content-type");
         if (!contentType.includes("text/html")) {
-            console.log(`Error - non HTML response, content type: ${contentType}, on page: ${currentURL}`);
-            return;
+            console.log(`ERROR - non HTML response, content type: ${contentType}, on page: ${currentURL}`);
+            return pages;
         }
 
-        console.log(await resp.text());
+        const htmlBody = await resp.text();
+
+        const nextURLs = getURLsFromHTML(htmlBody, baseURL);
+
+        for (const nextURL of nextURLs) {
+            pages = await crawlPage(baseURL, nextURL, pages);
+        }
     } catch (err) {
-        console.log (`Error in fetch: ${err.message}, on page: ${currentURL}`);
+        console.log (`ERROR in fetch: ${err.message}, on page: ${currentURL}`);
     }
+
+    return pages;
 }
 
 function getURLsFromHTML(htmlBody, baseURL) {
@@ -36,7 +58,7 @@ function getURLsFromHTML(htmlBody, baseURL) {
                 const urlObj = new URL(`${baseURL}${linkElement.href}`)
                 urls.push(urlObj.href);
             } catch (err) {
-                console.log(`Error with relative url: ${err.message}`)
+                console.log(`ERROR with relative url: ${err.message}`)
             }
         } else {
             // absolute url
@@ -44,7 +66,7 @@ function getURLsFromHTML(htmlBody, baseURL) {
                 const urlObj = new URL(linkElement.href)
                 urls.push(urlObj.href);
             } catch (err) {
-                console.log(`Error with absolute url: ${err.message}`)
+                console.log(`ERROR with absolute url: ${err.message}`)
             }
         }
     }
